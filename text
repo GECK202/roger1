@@ -1,0 +1,69 @@
+#Размер раздела:
+#4509700000 B
+#Узнать размер sudo disk -l
+
+#Настройка сети Nat Network
+
+#Обновить пакеты
+apt update
+apt upgrade
+
+#Установка sudo:
+apt install sudo
+
+#Добавление serveruser в sudoers:
+echo "serveruser ALL =(ALL) ALL" >> /etc/sudoers
+
+#Изменить настройки сети:
+#Редактировать файл /etc/network/interfaces:
+#auto enp0s3
+#iface enp0s3 net static
+#	address		10.0.2.2
+#	netmask		255.255.255.252
+#	network		10.0.2.0
+#	broadcast	10.0.2.255
+#	gateway		10.0.2.1
+#	dns-nameservers	10.0.2.1
+
+#Изменить файл /etc/ssh/sshd_config:
+#Добавить строку:
+#Port 50022
+
+#Выключить VM
+#Отключить в настройках сети dhcp
+#На хосте узнать ip
+#Пробросить порт
+#Запустить VM
+
+
+#На хосте сгенерировать ssh ключи:
+#ssh-keygen
+#Скопировать публичный ключ на сервер:
+#ssh-copy-id serveruser@192.168.21.72 -p9922
+
+#Подключиться по ssh:
+#ssh serveruser@192.168.21.72 -p9922
+
+#Отредактировать файл /etc/ssh/sshd_config для запрета доступа root и доступа по паролю:
+#Добавить строки:
+#PasswordAuthentication no
+#PermitRootLogin no
+
+#Настройка файрвола:
+#РАБОТАЕТ ТОЛЬКО С СЕРВЕРА
+#установка правил по умолчанию: запрет на всё:
+#sudo iptables -P INPUT DROP
+#sudo iptables -P OUTPUT DROP
+#sudo iptables -P FORWARD DROP
+
+#sudo iptables -A INPUT -i lo -j ACCEPT
+#sudo iptables -A OUTPUT -o lo -j ACCEPT
+
+#sudo iptables -A OUTPUT -o enp0s3 -j ACCEPT
+
+#sudo iptables -A INPUT -i enp0s3 -p tcp --dport 50022 -j ACCEPT
+#sudo iptables -A INPUT -i enp0s3 -p tcp --dport 80 -j ACCEPT
+#sudo iptables -A INPUT -i enp0s3 -p tcp --dport 443 -j ACCEPT
+
+#Защита DDOS:
+#sudo apt-get install fail2ban
