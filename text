@@ -13,12 +13,12 @@ apt upgrade
 apt install sudo
 
 #Добавление serveruser в sudoers:
-echo "serveruser ALL =(ALL) ALL" >> /etc/sudoers
+echo "serveruser ALL = (ALL) ALL" >> /etc/sudoers
 
 #Изменить настройки сети:
 #Редактировать файл /etc/network/interfaces:
 #auto enp0s3
-#iface enp0s3 net static
+#iface enp0s3 inet static
 #	address		10.0.2.2
 #	netmask		255.255.255.252
 #	network		10.0.2.0
