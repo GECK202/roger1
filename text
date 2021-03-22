@@ -63,7 +63,7 @@ echo "PermitRootLogin no" >> /etc/ssh/sshd_config
 
 #Настройка файрвола:
 
-apt install uff
+apt install ufw
 sudo ufw allow 443
 sudo ufw allow 80/tcp
 sudo ufw allow 50113/tcp
