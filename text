@@ -142,3 +142,144 @@ sudo ufw allow 50113/tcp
 # sudo systemctl restart apache2
 
 # проверить в браузере
+
+
+#============
+# Настройка самоподписанного сертификата SSL
+# sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout /etc/ssl/private/apache-selfsigned.key -out /etc/ssl/certs/apache-selfsigned.crt
+
+openssl: базовый инструмент командной строки для создания и управления сертификатами, ключами и другими файлами OpenSSL.
+req: эта подкоманда указывает, что на данном этапе нужно использовать запрос на подпись сертификата X.509 (CSR). X.509 – это стандарт инфраструктуры открытого ключа, которого придерживаются SSL и TLS при управлении ключами и сертификатами. То есть, данная команда позволяет создать новый сертификат X.509.
+-x509: эта опция вносит поправку в предыдущую субкоманду, чтобы вместо запроса на подпись сертификата создать самоподписанный сертификат.
+-nodes: пропускает опцию защиты сертификата парольной фразой. Нужно, чтобы при запуске сервер Apache имел возможность читать файл без вмешательства пользователя. Установив пароль, придется вводить его после каждой перезагрузки.
+-days 365: эта опция устанавливает срок действия сертификата (как видите, в данном случае сертификат действителен в течение года).
+-newkey rsa:2048: эта опция позволяет одновременно создать новый сертификат и новый ключ. Поскольку ключ, необходимый для подписания сертификата, не был создан ранее, нужно создать его вместе с сертификатом. Данная опция создаст ключ RSA на 2048 бит.
+-keyout: эта опция сообщает OpenSSL, куда поместить сгенерированный файл ключа.
+-out: сообщает OpenSSL, куда поместить созданный сертификат.
+
+# заполнить предложенные строки
+"
+Country Name (2 letter code) [AU]:US
+State or Province Name (full name) [Some-State]:New York
+Locality Name (eg, city) []:New York City
+Organization Name (eg, company) [Internet Widgits Pty Ltd]:Bouncy Castles, Inc.
+Organizational Unit Name (eg, section) []:Ministry of Water Slides
+Common Name (e.g. server FQDN or YOUR name) []:server_IP_address
+Email Address []:admin@your_domain.com
+"
+
+# Настройка Apache для поддержки SSL
+# sudo nano /etc/apache2/conf-available/ssl-params.conf
+# и заполнить:
+
+"
+SSLCipherSuite EECDH+AESGCM:EDH+AESGCM:AES256+EECDH:AES256+EDH
+SSLProtocol All -SSLv2 -SSLv3 -TLSv1 -TLSv1.1
+SSLHonorCipherOrder On
+# Disable preloading HSTS for now.  You can use the commented out header line that includes
+
+# the "preload" directive if you understand the implications.
+# Header always set Strict-Transport-Security "max-age=63072000; includeSubDomains; preload"
+Header always set X-Frame-Options DENY
+Header always set X-Content-Type-Options nosniff
+# Requires Apache >= 2.4
+SSLCompression off
+SSLUseStapling on
+SSLStaplingCache "shmcb:logs/stapling-cache(150000)"
+# Requires Apache >= 2.4.11
+SSLSessionTickets Off
+"
+
+# Настройка стандартного виртуального хоста Apache
+# Прежде чем приступить к настройке, создайте резервную копию файла хоста
+# sudo cp /etc/apache2/sites-available/default-ssl.conf /etc/apache2/sites-available/default-ssl.conf.bak
+# редактирование файла:
+# sudo nano /etc/apache2/sites-available/default-ssl.conf
+
+# ИСХОДНО
+<IfModule mod_ssl.c>
+<VirtualHost _default_:443>
+ServerAdmin webmaster@localhost
+DocumentRoot /var/www/html
+ErrorLog ${APACHE_LOG_DIR}/error.log
+CustomLog ${APACHE_LOG_DIR}/access.log combined
+SSLEngine on
+SSLCertificateFile      /etc/ssl/certs/ssl-cert-snakeoil.pem
+SSLCertificateKeyFile /etc/ssl/private/ssl-cert-snakeoil.key
+<FilesMatch "\.(cgi|shtml|phtml|php)$">
+SSLOptions +StdEnvVars
+</FilesMatch>
+<Directory /usr/lib/cgi-bin>
+SSLOptions +StdEnvVars
+</Directory>
+</VirtualHost>
+</IfModule>
+
+# ПОСЛЕ ИЗМЕНЕНИЙ
+<IfModule mod_ssl.c>
+<VirtualHost _default_:443>
+ServerAdmin your_email@example.com
+ServerName server_domain_or_IP
+DocumentRoot /var/www/html
+ErrorLog ${APACHE_LOG_DIR}/error.log
+CustomLog ${APACHE_LOG_DIR}/access.log combined
+SSLEngine on
+SSLCertificateFile      /etc/ssl/certs/apache-selfsigned.crt
+SSLCertificateKeyFile /etc/ssl/private/apache-selfsigned.key
+<FilesMatch "\.(cgi|shtml|phtml|php)$">
+SSLOptions +StdEnvVars
+</FilesMatch>
+<Directory /usr/lib/cgi-bin>
+SSLOptions +StdEnvVars
+</Directory>
+</VirtualHost>
+</IfModule>
+
+# отключение незашифрованного трафика HTTP
+# отредактировать conf:
+sudo nano /etc/apache2/sites-available/000-default.conf
+
+<VirtualHost *:80>
+. . .
+Redirect "/" "https://your_domain_or_IP/"
+. . .
+</VirtualHost>
+
+# Настройка фаервола:
+sudo ufw allow 'WWW Full'
+sudo ufw delete allow 'WWW'
+
+# Обновление настроек apache
+sudo a2enmod ssl
+sudo a2enmod headers
+
+sudo a2ensite default-ssl
+
+sudo a2enconf ssl-params
+
+# проверить ошибки
+sudo apache2ctl configtest
+
+# перезапуск apache
+sudo systemctl restart apache2
+
+# проверить шифрование в браузере
+https://server_domain_or_IP
+
+# проверить редирект
+http://server_domain_or_IP
+
+# постоянный редирект вместо временного
+sudo nano /etc/apache2/sites-available/000-default.conf
+
+<VirtualHost *:80>
+. . .
+Redirect permanent "/" "https://your_domain_or_IP/"
+. . .
+</VirtualHost>
+
+# проверка ошибок 
+sudo apache2ctl configtest
+
+# перезапуск apache
+sudo systemctl restart apache2
