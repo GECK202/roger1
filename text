@@ -87,3 +87,58 @@ sudo ufw allow 50113/tcp
 #sudo iptables -A INPUT -i enp0s3 -p tcp --dport 443 -j ACCEPT
 
 
+#Установка и настройка веб-сервера apache:
+# sudo apt install apache2
+
+# настройка фаервола
+# sudo ufw allow 'WWW'
+
+# проверка веб сервера
+# sudo systemctl status apache2
+
+# чтобы убедиться что всё работает - пробросить 80 порт и проверить в браузере
+
+# создать каталог для сайта
+# sudo mkdir -p /var/www/example.com/html
+
+# назначить владельца каталога
+#sudo chown -R $USER:$USER /var/www/example.com/html
+
+# создать index.html сайта
+# nano /var/www/example.com/html/index.html
+# и наполнить:
+# <html>
+#    <head>
+#        <title>Welcome to Example.com!</title>
+#    </head>
+#    <body>
+#        <h1>Success!  The example.com virtual host is working!</h1>
+#    </body>
+# </html>
+
+# создать файл конфигурации
+# sudo nano /etc/apache2/sites-available/example.com.conf
+# и заполнить его:
+# <VirtualHost *:80>
+#     ServerAdmin admin@example.com
+#     ServerName example.com
+#     ServerAlias www.example.com
+#     DocumentRoot /var/www/example.com/html
+#     ErrorLog ${APACHE_LOG_DIR}/error.log
+#     CustomLog ${APACHE_LOG_DIR}/access.log combined
+# </VirtualHost>
+
+# активировать сайт
+# sudo a2ensite example.com.conf
+
+# деактивировать сайр по умолчанию
+# sudo a2dissite 000-default.conf
+
+# проверить на ошибки 
+# sudo apache2ctl configtest
+# должно быть Syntax OK
+
+# перезапустить apache
+# sudo systemctl restart apache2
+
+# проверить в браузере
