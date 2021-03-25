@@ -147,6 +147,7 @@ sudo ufw allow 50113/tcp
 #============
 # Настройка самоподписанного сертификата SSL
 # sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout /etc/ssl/private/apache-selfsigned.key -out /etc/ssl/certs/apache-selfsigned.crt
+(openssl req -x509 -newkey rsa:2048 -out server.crt -keyout server.key -subj /CN=localhost/emailAddress=joshua.davies.tx@gmail.com(CN-Common Name;L-Locality (city);ST-State (or province);O-Organization (for example, company);OU-Organizational Unit;C-Country(Единственное обязательное значение, которое нужно указать при создании сертификата, - common name (CN), и оно должно совпадать с именем хоста)))
 
 openssl: базовый инструмент командной строки для создания и управления сертификатами, ключами и другими файлами OpenSSL.
 req: эта подкоманда указывает, что на данном этапе нужно использовать запрос на подпись сертификата X.509 (CSR). X.509 – это стандарт инфраструктуры открытого ключа, которого придерживаются SSL и TLS при управлении ключами и сертификатами. То есть, данная команда позволяет создать новый сертификат X.509.
